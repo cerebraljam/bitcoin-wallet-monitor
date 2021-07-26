@@ -31,7 +31,7 @@ db.serialize(() => {
     db.run(`CREATE INDEX IF NOT EXISTS idxa ON tx (address)`)
 })
 
-let sql = `SELECT * FROM tx WHERE hash = ?`
+let sql = `SELECT * FROM tx WHERE txid = ?`
 
 const insert = function(body, next) {
     let insert_stmt = db.prepare("INSERT OR IGNORE INTO tx(txid, address, value) VALUES (?, ?, ?)")
@@ -55,7 +55,9 @@ async function run() {
             tx.ins = tx.ins.map(function(x) {
                 x.hash = x.hash.toString('hex')
                 x.script = x.script.toString('hex')
-		sources.push(x.hash)
+		if (sources.indexOf(x.hash) == -1) {
+		    sources.push(x.hash)
+		}
                 return x
 
             })
@@ -86,15 +88,17 @@ async function run() {
 	        }
             } 
 	    // Step 2: check if any of the ins hash exists in our monitored transaction list
-	   db.get(sql, sources, (err, row) => {
-               if (err) {
-                   console.error(err.message)
-                   return false
-               }
-               if (row != undefined) {
-                   console.log('* match', row)
-               }
-           })
+	   for (let i = 0; i < sources.length; i++) {
+	       db.get(sql, [sources[i]], (err, row) => {
+                   if (err) {
+                       console.error(sources[i], err.message)
+                       return false
+                   }
+                   if (row != undefined) {
+                       console.log('* match', soures[i], row)
+                   }
+               })
+           }
         } else {
             if (topic.toString() === 'rawblock') {
                 let rawBlk = message.toString('hex')
