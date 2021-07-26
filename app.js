@@ -7,7 +7,7 @@ const sock = new zmq.Subscriber
 
 const config = { // address of the full node with zeromq enabled
     host:'192.168.68.122',
-    monitor: ['3FSGtVCenJ8dRVwMR62PogKKkJ1H2AzTGJ'] 
+    monitor: ['34xp4vRoCGJym3xR7yCVPFHoCNxv4Twseo'] 
 }
 sock.connect("tcp://"+config['host']+":29000")
 sock.subscribe('rawtx');
