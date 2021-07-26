@@ -27,8 +27,8 @@ db.serialize(() => {
         }
 
     })
-    db.run(`CREATE INDEX IF NOT EXISTS idxt ON history (txid)`)
-    db.run(`CREATE INDEX IF NOT EXISTS idxa ON history (address)`)
+    db.run(`CREATE INDEX IF NOT EXISTS idxt ON tx (txid)`)
+    db.run(`CREATE INDEX IF NOT EXISTS idxa ON tx (address)`)
 })
 
 let sql = `SELECT * FROM tx WHERE hash = ?`
@@ -67,7 +67,7 @@ async function run() {
                         y.script = y.script.toString('hex')
                         y.error = true
                     }
-                    incomings.push({'address': y.script, 'value': y.value'})
+                    incomings.push({'address': y.script, 'value': y.value})
                 }
                 return y
             })
