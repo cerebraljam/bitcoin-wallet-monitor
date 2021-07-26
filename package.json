@@ -1,5 +1,5 @@
 {
-  "name": "bitcoin-zmq",
+  "name": "bitcoin-wallet-monitor",
   "version": "1.0.0",
   "description": "client",
   "main": "app.js",
