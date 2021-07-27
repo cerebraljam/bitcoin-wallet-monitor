@@ -12,7 +12,7 @@ const config = {
     automonitor: 1 * 100000000,
     debugminimum: 5 * 100000000
 }
-sock.connect("tcp://"+config['host']+":29001")
+sock.connect("tcp://"+config['host']+":29000")
 sock.subscribe('rawtx');
 sock.subscribe('rawblock');
 
@@ -41,23 +41,22 @@ const insert = function(body, next) {
     let created = new Date().toISOString()
     let insert_stmt = db.prepare("INSERT OR IGNORE INTO tx(txid, address, value, created) VALUES (?, ?, ?, ?)")
     insert_stmt.run(body['txid'], body['address'], body['value'], created)
-    console.log('inserted', body['txid'], body['address'], body['value'], created)
+    //console.log('inserted', body['txid'], body['address'], body['value'], created)
     insert_stmt.finalize()
     next()
 }
-/*
+
 const update = function(txid, next) {
     let spent = new Date().toISOString()
     let update_stmt = db.prepare("UPDATE tx SET spent = ? WHERE txid = ?")
     update_stmt.run(spent, txid)
-    console.log('updated', txid, spent)
+    console.log(new Date().toISOString(), 'updated', txid, spent)
     update_stmt.finalize()
     next()
 }
-*/
+
 async function run() {
     for await (const [topic, message] of sock) {
-        console.log(topic.toString())
         if (topic.toString() === 'rawtx') {
             let incomings = []
      	    let sources = []
@@ -92,7 +91,6 @@ async function run() {
             // Step 1: check if the address is an address we care about
             // if yes, write the txid
             for (let i = 0; i < incomings.length; i++) {
-                console.log(incomings[i])
 		        if (config['monitor'].indexOf(incomings[i]['address']) != -1 || (config['debug'] && incomings[i]['value'] >= config['automonitor'])) {
                     fs.appendFile('live_tx.json', JSON.stringify(tx) + '\n', function(err) {
                         if (err) return console.log(err)
@@ -105,23 +103,23 @@ async function run() {
 		            })
 	            }
             } 
-	    // Step 2: check if any of the ins hash exists in our monitored transaction list
-        for (let i = 0; i < sources.length; i++) {
-	        db.get(sql, [sources[i]], (err, row) => {
-                if (err) {
-                    console.error(sources[i], err.message)
-                        return false
+	        // Step 2: check if any of the ins hash exists in our monitored transaction list
+            for (let i = 0; i < sources.length; i++) {
+	            db.get(sql, [sources[i]], (err, row) => {
+                    if (err) {
+                        console.error(sources[i], err.message)
+                            return false
+                        }
+                        if (row != undefined) {
+                            fs.appendFile('outgoing_tx.json', JSON.stringify(tx) + '\n', function(err) {
+                                if (err) return console.log(err)
+                        })
+                        update(sources[i], function() {
+                            console.log('* ', new Date().toISOString() ,'match', sources[i], row)
+                        })
                     }
-                    if (row != undefined) {
-                        fs.appendFile('outgoing_tx.json', JSON.stringify(tx) + '\n', function(err) {
-                            if (err) return console.log(err)
-                       })
-                       /*update(sources[i], function() {
-                           console.log('* ', new Date().toISOString() ,'match', sources[i], row)
-                       })*/
-                   }
-               })
-           }
+                })
+            }
         } else if (topic.toString() === 'rawblock') {
             let rawBlk = message.toString('hex')
             let blk = bitcoin.Block.fromHex(rawBlk)
