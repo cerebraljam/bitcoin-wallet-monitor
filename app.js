@@ -5,12 +5,12 @@ const readline = require('readline');
 const sqlite3 = require('sqlite3').verbose();
 const sock = new zmq.Subscriber
 
-const config = { // address of the full node with zeromq enabled
-    host:'fullnode',
+const config = {
+    host:'192.168.1.10', // address of the full node with zeromq enabled
     monitor: ['3QTUxAKmHqLAkvAjSvPxYoi5yUVRPQm2Cx', 'bc1qwfgdjyy95aay2686fn74h6a4nu9eev6np7q4fn204dkj3274frlqrskvx0', 'bc1qaw7e304esayf9ph9j5hn8uz6nwecudy6kvp2wu'],
     debug: true,
-    automonitor: 0.0001 * 100000000,
-    debugminimum: 50 * 100000000
+    automonitor: 1 * 100000000,
+    debugminimum: 5 * 100000000
 }
 sock.connect("tcp://"+config['host']+":29001")
 sock.subscribe('rawtx');
@@ -20,7 +20,7 @@ var db = new sqlite3.Database('wallet_watchlist.sqlite3', (err) => {
     if (err) {
         return console.error(err.message)
     }
-    console.log('Connected to the database')
+    console.log('database ok')
 })
 
 db.serialize(() => {
@@ -32,6 +32,7 @@ db.serialize(() => {
     })
     db.run(`CREATE INDEX IF NOT EXISTS idxt ON tx (txid)`)
     db.run(`CREATE INDEX IF NOT EXISTS idxa ON tx (address)`)
+    console.log('table created')
 })
 
 let sql = `SELECT * FROM tx WHERE txid = ?`
@@ -40,21 +41,23 @@ const insert = function(body, next) {
     let created = new Date().toISOString()
     let insert_stmt = db.prepare("INSERT OR IGNORE INTO tx(txid, address, value, created) VALUES (?, ?, ?, ?)")
     insert_stmt.run(body['txid'], body['address'], body['value'], created)
+    console.log('inserted', body['txid'], body['address'], body['value'], created)
     insert_stmt.finalize()
     next()
 }
-
+/*
 const update = function(txid, next) {
     let spent = new Date().toISOString()
     let update_stmt = db.prepare("UPDATE tx SET spent = ? WHERE txid = ?")
     update_stmt.run(spent, txid)
+    console.log('updated', txid, spent)
     update_stmt.finalize()
     next()
 }
-
+*/
 async function run() {
     for await (const [topic, message] of sock) {
-    
+        console.log(topic.toString())
         if (topic.toString() === 'rawtx') {
             let incomings = []
      	    let sources = []
@@ -70,7 +73,6 @@ async function run() {
 		            sources.push(x.hash)
 		        }
                 return x
-
             })
 	    
             tx.outs = tx.outs.map(function(y) {
@@ -90,6 +92,7 @@ async function run() {
             // Step 1: check if the address is an address we care about
             // if yes, write the txid
             for (let i = 0; i < incomings.length; i++) {
+                console.log(incomings[i])
 		        if (config['monitor'].indexOf(incomings[i]['address']) != -1 || (config['debug'] && incomings[i]['value'] >= config['automonitor'])) {
                     fs.appendFile('live_tx.json', JSON.stringify(tx) + '\n', function(err) {
                         if (err) return console.log(err)
@@ -113,18 +116,18 @@ async function run() {
                         fs.appendFile('outgoing_tx.json', JSON.stringify(tx) + '\n', function(err) {
                             if (err) return console.log(err)
                        })
-                       update(sources[i], function() {
+                       /*update(sources[i], function() {
                            console.log('* ', new Date().toISOString() ,'match', sources[i], row)
-                       })
+                       })*/
                    }
                })
            }
+        } else if (topic.toString() === 'rawblock') {
+            let rawBlk = message.toString('hex')
+            let blk = bitcoin.Block.fromHex(rawBlk)
+            console.log('+', new Date().toISOString(), blk.getId())
         } else {
-            if (topic.toString() === 'rawblock') {
-                let rawBlk = message.toString('hex')
-                let blk = bitcoin.Block.fromHex(rawBlk)
-                console.log('+', new Date().toISOString(), blk.getId())
-            }
+            console.log(topic.toString())
         }
     }
 }
