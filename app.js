@@ -9,7 +9,7 @@ const config = {
     host:'192.168.1.10', // address of the full node with zeromq enabled
     monitor: ['3QTUxAKmHqLAkvAjSvPxYoi5yUVRPQm2Cx', 'bc1qwfgdjyy95aay2686fn74h6a4nu9eev6np7q4fn204dkj3274frlqrskvx0', 'bc1qaw7e304esayf9ph9j5hn8uz6nwecudy6kvp2wu'],
     debug: true,
-    automonitor: 1 * 100000000,
+    automonitor: 0.0001 * 100000000,
     debugminimum: 5 * 100000000
 }
 sock.connect("tcp://"+config['host']+":29000")
@@ -20,7 +20,6 @@ var db = new sqlite3.Database('wallet_watchlist.sqlite3', (err) => {
     if (err) {
         return console.error(err.message)
     }
-    console.log('database ok')
 })
 
 db.serialize(() => {
@@ -32,7 +31,6 @@ db.serialize(() => {
     })
     db.run(`CREATE INDEX IF NOT EXISTS idxt ON tx (txid)`)
     db.run(`CREATE INDEX IF NOT EXISTS idxa ON tx (address)`)
-    console.log('table created')
 })
 
 let sql = `SELECT * FROM tx WHERE txid = ?`
@@ -125,7 +123,7 @@ async function run() {
             let blk = bitcoin.Block.fromHex(rawBlk)
             console.log('+', new Date().toISOString(), blk.getId())
         } else {
-            console.log(topic.toString())
+            console.log('- not handled:', topic.toString())
         }
     }
 }
