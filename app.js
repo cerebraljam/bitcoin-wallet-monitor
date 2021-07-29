@@ -23,7 +23,7 @@ var db = new sqlite3.Database('wallet_watchlist.sqlite3', (err) => {
 })
 
 db.serialize(() => {
-    db.run(`CREATE TABLE IF NOT EXISTS tx(id INTEGER PRIMARY KEY AUTOINCREMENT, txid TEXT, address TEXT, value NUMBER, created DATE, spent DATE)`, (err) => {
+    db.run(`CREATE TABLE IF NOT EXISTS tx(id INTEGER PRIMARY KEY AUTOINCREMENT, txid TEXT, address TEXT, value NUMBER, created DATE, spent TEXT)`, (err) => {
         if (err) {
             return console.error('**', err.message)
         }
