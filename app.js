@@ -9,8 +9,8 @@ const config = {
     host:'192.168.1.10', // address of the full node with zeromq enabled
     monitor: ['3QTUxAKmHqLAkvAjSvPxYoi5yUVRPQm2Cx', 'bc1qwfgdjyy95aay2686fn74h6a4nu9eev6np7q4fn204dkj3274frlqrskvx0', 'bc1qaw7e304esayf9ph9j5hn8uz6nwecudy6kvp2wu'],
     debug: true,
-    automonitor: 0.0001 * 100000000,
-    debugminimum: 5 * 100000000
+    automonitor: 1 * 100000000,
+    debugminimum: 100 * 100000000
 }
 sock.connect("tcp://"+config['host']+":29000")
 sock.subscribe('rawtx');
@@ -53,11 +53,32 @@ const update = function(txid, next) {
     next()
 }
 
+const select = function(txids, next) {
+    for (let i = 0; i < txids.length; i++) {
+        let stmt = db.prepare('SELECT * FROM tx WHERE txid = ?')
+        stmt.each(txids[i], function(err, row) {
+            if (err) {
+                console.log('barf', err)
+            } else { 
+                next(row)
+            }
+        }, function(err, count) {
+            if (err) {
+                console.log('puke', err)
+            } else if (count > 0) {
+                console.log(count)
+            }
+            stmt.finalize();
+        });
+    }
+
+
+}
 async function run() {
     for await (const [topic, message] of sock) {
         if (topic.toString() === 'rawtx') {
-            let incomings = []
-     	    let sources = []
+     	    let ins = []
+            let outs = []
 
             var rawTx = message.toString('hex');
             var tx = bitcoin.Transaction.fromHex(rawTx);
@@ -66,8 +87,9 @@ async function run() {
             tx.ins = tx.ins.map(function(x) {
                 x.hash = x.hash.toString('hex')
                 x.script = x.script.toString('hex')
-		        if (sources.indexOf(x.hash) == -1) {
-		            sources.push(x.hash)
+		        if (ins.indexOf(x.hash) == -1) {
+                    //console.log('ins', x.hash.length, x.hash)
+		            ins.push(x.hash)
 		        }
                 return x
             })
@@ -80,7 +102,9 @@ async function run() {
                         y.script = y.script.toString('hex')
                         y.error = true
                     }
-                    incomings.push({'address': y.script, 'value': y.value, 'txid': tx.txid})
+
+                    //console.log('outs', tx.txid.length, tx.txid)
+                    outs.push({'address': y.script, 'value': y.value, 'txid': tx.txid})
                 }
                 return y
             })
@@ -88,36 +112,63 @@ async function run() {
            
             // Step 1: check if the address is an address we care about
             // if yes, write the txid
-            for (let i = 0; i < incomings.length; i++) {
-		        if (config['monitor'].indexOf(incomings[i]['address']) != -1 || (config['debug'] && incomings[i]['value'] >= config['automonitor'])) {
+            for (let i = 0; i < outs.length; i++) {
+		        if (config['monitor'].indexOf(outs[i]['address']) != -1 || (config['debug'] && outs[i]['value'] >= config['automonitor'])) {
                     fs.appendFile('live_tx.json', JSON.stringify(tx) + '\n', function(err) {
                         if (err) return console.log(err)
                     })
 
-		            insert(incomings[i], function() {
-			            if (config['debug'] && incomings[i]['value'] >= config['debugminimum']) {
-		                    console.log(new Date().toISOString(), incomings[i]['address'], incomings[i]['value']/100000000)
+		            insert(outs[i], function() {
+			            if (config['debug'] && outs[i]['value'] >= config['debugminimum']) {
+		                    console.log(new Date().toISOString(), outs[i]['address'], outs[i]['value']/100000000)
 			            }
 		            })
+                    //ins.push(outs[i]['txid'])
 	            }
             } 
+
 	        // Step 2: check if any of the ins hash exists in our monitored transaction list
-            for (let i = 0; i < sources.length; i++) {
-	            db.get(sql, [sources[i]], (err, row) => {
+            select(ins, function(row) {
+                console.log('found', row);
+                fs.appendFile('outgoing_tx.json', JSON.stringify(tx) + '\n', function(err) {
+                    if (err) return console.log(err)
+                })
+                update(ins[i], function(updated) {
+                    db.get(sql, [ins[i]], (err, updated) => {
+                       if (err) {
+                           console.error(ins[i], err.message)
+                           return false
+                       } else {
+                           console.log('* match', ins[i], updated)
+                       }
+                    })
+                        
+                })
+            })
+            /*
+            for (let i = 0; i < ins.length; i++) {
+	            db.get(sql, [ins[i]], (err, row) => {
                     if (err) {
-                        console.error(sources[i], err.message)
-                            return false
-                        }
-                        if (row != undefined) {
-                            fs.appendFile('outgoing_tx.json', JSON.stringify(tx) + '\n', function(err) {
-                                if (err) return console.log(err)
+                        console.error(ins[i], err.message)
+                        return false
+                    }
+
+                    if (row != undefined) {
+                        fs.appendFile('outgoing_tx.json', JSON.stringify(tx) + '\n', function(err) {
+                            if (err) return console.log(err)
                         })
-                        update(sources[i], function() {
-                            console.log('* ', new Date().toISOString() ,'match', sources[i], row)
+                        update(ins[i], function(updated) {
+                            db.get(sql, [ins[i]], (err, updated) => {
+                                if (err) {
+                                    console.error(ins[i], err.message)
+                                    return false
+                                }
+                                console.log('* match', ins[i], updated)
+                            })
                         })
                     }
                 })
-            }
+            }*/
         } else if (topic.toString() === 'rawblock') {
             let rawBlk = message.toString('hex')
             let blk = bitcoin.Block.fromHex(rawBlk)
