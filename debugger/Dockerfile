@@ -11,9 +11,14 @@ RUN npm install --quiet
 # Bundle app source
 COPY . /code
 
+ENV THRESHOLD=10000000
+
 ENV ZMQNODE=192.168.68.122
 ENV ZMQPORT=29000
 # ENV APIHOST="api"
-ENV THRESHOLD=100
+
+ENV RPCNODE=192.168.68.122
+ENV RPCUSER=bitcoin
+ENV RPCPASS=local127
 
 CMD ["npm", "run", "start"]

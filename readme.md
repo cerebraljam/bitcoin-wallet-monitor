@@ -25,7 +25,25 @@ The bug is that I need to look at all the transactions to keep this state up to 
 
 ## Quickstart
 
+### Step 1: Configure
+Configure the address of your full node in `./processor/Dockerfile` and `./debugger/Dockerfile`
+> ENV ZMQNODE=192.168.1.10
+> ENV RPCNODE=192.168.68.10
+> ENV RPCUSER=rpcuser
+> ENV RPCPASS=rpcpass
+
+### Step 2: Enable/Disable the debugger
+In the `docker-compose.yml` file, comment or uncomment the debugger section if you want to auto monitor addresses based on value.
+
+If you enable or disable, be sure to configure the threshold in  `./debugger/Dockerfile` (1 == 1btc)
+> ENV THRESHOLD=1
+
+if you enable or disable, you will need to rebuild.
+> docker-compose up --build
+
+### Step 2: Start all the services
 > docker-compose up
+
 
 ## Components
 
@@ -105,11 +123,6 @@ Note: there is no authentication. It is a bad idea to put it straight on the int
     }
 ```
 
-# Todo
-
-* send logs to pubsub -> bigquery
-
-
 # Content of One Transaction, As Decoded by the fullnode
 
 ```
@@ -166,3 +179,8 @@ debugger_1  |     }
 debugger_1  |   ]
 debugger_1  | }
 ```
+
+# Todo
+
+* send logs to pubsub -> bigquery
+

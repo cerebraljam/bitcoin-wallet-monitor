@@ -18,14 +18,14 @@ services:
                         - ./processor/:/app/code
                 depends_on:
                         - mongo
-        debugger:
-                build:
-                        context: ./debugger
-                        dockerfile: Dockerfile
-                volumes:
-                        - ./debugger/:/app/code
-                depends_on:
-                        - mongo
+        # debugger:
+        #         build:
+        #                 context: ./debugger
+        #                 dockerfile: Dockerfile
+        #         volumes:
+        #                 - ./debugger/:/app/code
+        #         depends_on:
+        #                 - mongo
         mongo:
                 image: mongo
                 restart: always
