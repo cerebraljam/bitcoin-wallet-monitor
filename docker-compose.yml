@@ -1,0 +1,38 @@
+version: "3.9"
+services:
+        api:
+                build:
+                        context: ./api/
+                        dockerfile: Dockerfile
+                ports:
+                        - "5000:5000"
+                volumes:
+                        - ./api/:/app/code
+                depends_on:
+                        - mongo
+        processor:
+                build:
+                        context: ./processor
+                        dockerfile: Dockerfile
+                volumes:
+                        - ./processor/:/app/code
+                depends_on:
+                        - mongo
+        debugger:
+                build:
+                        context: ./debugger
+                        dockerfile: Dockerfile
+                volumes:
+                        - ./debugger/:/app/code
+                depends_on:
+                        - mongo
+        mongo:
+                image: mongo
+                restart: always
+                volumes:
+                       - mongo-data:/data/db
+        redis:
+                image: redis:alpine
+                restart: always
+volumes:
+        mongo-data:

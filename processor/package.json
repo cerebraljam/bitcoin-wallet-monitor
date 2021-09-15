@@ -1,17 +1,20 @@
 {
-  "name": "bitcoin-wallet-monitor",
+  "name": "processor",
   "version": "1.0.0",
   "description": "client",
-  "main": "app.js",
+  "main": "code/processor.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "nodemon"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "bitcoind-rpc": "^0.8.1",
     "bitcoinjs-lib": "^5.2.0",
-    "sqlite3": "^5.0.2",
+    "mongodb": "^3.6.3",
+    "nodemon": "^1.14.12",
+    "redis": "^3.1.2",
+    "bee-queue": "^1.4.0",
     "zeromq": "^6.0.0-beta.6"
   }
 }

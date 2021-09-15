@@ -1,0 +1,20 @@
+{
+  "name": "web",
+  "version": "1.0.0",
+  "description": "client",
+  "main": "code/server.js",
+  "scripts": {
+    "test": "mocha --bail",
+    "start": "nodemon"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1",
+    "mongodb": "^3.6.3",
+    "nodemon": "^2.0.12"
+  },
+  "devDependencies": {
+    "mocha": "^9.1.1"
+  }
+}
