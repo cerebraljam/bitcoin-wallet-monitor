@@ -27,10 +27,12 @@ The bug is that I need to look at all the transactions to keep this state up to 
 
 ### Step 1: Configure
 Configure the address of your full node in `./processor/Dockerfile` and `./debugger/Dockerfile`
-> ENV ZMQNODE=192.168.1.10
-> ENV RPCNODE=192.168.68.10
-> ENV RPCUSER=rpcuser
-> ENV RPCPASS=rpcpass
+```
+ENV ZMQNODE=192.168.1.10
+ENV RPCNODE=192.168.68.10
+ENV RPCUSER=rpcuser
+ENV RPCPASS=rpcpass
+```
 
 ### Step 2: Enable/Disable the debugger
 In the `docker-compose.yml` file, comment or uncomment the debugger section if you want to auto monitor addresses based on value.
