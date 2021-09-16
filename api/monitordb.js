@@ -43,6 +43,8 @@ MongoClient.connect(MONGOURL, function(err, client) {
     } else {
         console.log("Connected successfully to database")
         db = client.db(DBNAME)
+        db.collection(addrContext).createIndex({"addr": 1}, {"unique": true})
+        db.collection(txContext).createIndex({"addr": 1, "txid": 1}, {"unique": true})
     }
 })
 
@@ -87,7 +89,7 @@ const addrList = function(payload, next) {
     let query = {}
     if (isAddr(payload.addr) != false) query.addr = payload.addr
 
-	collection.find(query).toArray(function(err, result) {
+	collection.find(query).sort({'timestamp':1}).toArray(function(err, result) {
 		if (err) console.error('addrList:', err)
 		next(result)
         
@@ -138,8 +140,7 @@ const txAdd = function(payload, next) {
                 outputAddrs: areAddrs(payload.outputAddrs.split(",")),
                 addr: payload.addr,
                 txid: payload.txid,
-                value: parseFloat(payload.value),
-                host: payload.host
+                value: parseFloat(payload.value)
             }
         }
         
@@ -181,7 +182,7 @@ const txList = function(payload, next) {
     if (payload.txid != undefined) query.txid = payload.txid
     if (payload.action != undefined) query.action = payload.action
 
-	collection.find(query).toArray(function(err, result) {
+	collection.find(query).sort({'timestamp':1}).toArray(function(err, result) {
 		if (err) console.error('txList:', err)
 		next(result)
 	})
