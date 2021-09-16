@@ -1,0 +1,11 @@
+zmqpubrawblock=tcp://0.0.0.0:29000
+zmqpubrawtx=tcp://0.0.0.0:29000
+zmqpubhashtx=tcp://0.0.0.0:29000
+zmqpubhashblock=tcp://0.0.0.0:29000
+
+rpcuser=user
+rpcpassword=pass
+rpcallowip=192.168.0.0/16
+rpcbind=0.0.0.0:8332
+
+txindex=1
