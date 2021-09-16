@@ -170,7 +170,7 @@ const addRelevantIncommings = function(tx, inputTxs, outputAddrs) {
 }
 
 
-decodeQueue.process(1, (job, done) => {
+decodeQueue.process(2, (job, done) => {
     rpc.decodeRawTransaction(job.data, async function(err, txDecoded) {
         if (err) {
             console.error('decodeQueue.process', err)
