@@ -22,6 +22,8 @@ This means that...
 
 The bug is that I need to look at all the transactions to keep this state up to date. going offline risks missing incoming (deposit) or outgoing (withdraw) of coins
 
+Note about capacity:
+> This service isn't meant to monitor all transactions occuring on the blockchain for analysis later. if you want to do this, using the [public dataset on Bigquery](https://cloud.google.com/blog/topics/public-datasets/bitcoin-in-bigquery-blockchain-analytics-on-public-data) will be more useful.
 
 ## Quickstart
 
